@@ -23,6 +23,14 @@ def main():
     net = model_class()
     net.train()
     net = net.float().to(device)
+    
+    if args.resume:
+        print("Load state dict from", args.resume)
+        state_dict = torch.load(args.resume)
+        net.load_state_dict(state_dict, strict=False)
+        for module in net.modules():
+            if hasattr(module, 'weight_org'):
+                module.weight_org.copy_(module.weight)
 
     # Start dataset loading
     trainset = IEGM_DataSET(root_dir=path_data,
@@ -146,6 +154,7 @@ if __name__ == '__main__':
     argparser.add_argument('--path_indices', type=str, default='./data_indices')
     argparser.add_argument('--xnor', action='store_true', help='train an xnor model instead of full precision')
     # TODO: Bitwidth argument
+    argparser.add_argument('--resume', type=str, default=None, help='path to state_dict from which to resume training')
 
     args = argparser.parse_args()
 
