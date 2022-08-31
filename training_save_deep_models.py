@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.optim as optim
 from help_code_demo import ToTensor, IEGM_DataSET
-from models.model_1 import IEGMNet
+from models.model_1 import IEGMNet, IEGMNetXNOR
 
 
 def main():
@@ -19,7 +19,8 @@ def main():
     path_indices = args.path_indices
 
     # Instantiating NN
-    net = IEGMNet()
+    model_class = IEGMNetXNOR if args.xnor else IEGMNet
+    net = model_class()
     net.train()
     net = net.float().to(device)
 
@@ -110,8 +111,12 @@ def main():
         Test_loss.append(running_loss_test / i)
         Test_acc.append((correct / total).item())
 
-    torch.save(net, './saved_models/IEGM_net.pkl')
-    torch.save(net.state_dict(), './saved_models/IEGM_net_state_dict.pkl')
+    if args.xnor:
+        torch.save(net, './saved_models/IEGM_net_xnor.pkl')
+        torch.save(net.state_dict(), './saved_models/IEGM_net_state_dict_xnor.pkl')
+    else:
+        torch.save(net, './saved_models/IEGM_net.pkl')
+        torch.save(net.state_dict(), './saved_models/IEGM_net_state_dict.pkl')
 
     file = open('./saved_models/loss_acc.txt', 'w')
     file.write("Train_loss\n")
@@ -137,13 +142,14 @@ if __name__ == '__main__':
     argparser.add_argument('--batchsz', type=int, help='total batchsz for traindb', default=32)
     argparser.add_argument('--cuda', type=int, default=0)
     argparser.add_argument('--size', type=int, default=1250)
-    argparser.add_argument('--path_data', type=str, default='H:/Date_Experiment/data_IEGMdb_ICCAD_Contest/segments-R250'
-                                                            '-BPF15_55-Noise/tinyml_contest_data_training/')
+    argparser.add_argument('--path_data', type=str, default='/home/ravit/Documents/NanoCAD/TinyMLContest/data/')
     argparser.add_argument('--path_indices', type=str, default='./data_indices')
+    argparser.add_argument('--xnor', action='store_true', help='train an xnor model instead of full precision')
+    # TODO: Bitwidth argument
 
     args = argparser.parse_args()
 
-    device = torch.device("cuda:" + str(args.cuda))
+    device = "cpu" #torch.device("cuda:" + str(args.cuda))
 
     print("device is --------------", device)
 

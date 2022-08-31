@@ -26,10 +26,10 @@ def main():
     stats_file = open(path_records + 'seg_stat.txt', 'w')
 
     # load trained network
-    net = torch.load(path_net + 'IEGM_net.pkl', map_location='cuda:0')
+    net = torch.load(path_net + 'IEGM_net.pkl', map_location='cpu') #'cuda:0')
     net.eval()
-    net.cuda()
-    device = torch.device('cuda:0')
+    #net.cuda()
+    device = torch.device('cpu') #torch.device('cuda:0')
 
     testset = IEGM_DataSET(root_dir=path_data,
                            indice_dir=path_indices,
@@ -73,8 +73,7 @@ if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
     argparser.add_argument('--cuda', type=int, default=0)
     argparser.add_argument('--size', type=int, default=1250)
-    argparser.add_argument('--path_data', type=str, default='H:/Date_Experiment/data_IEGMdb_ICCAD_Contest/segments-R250'
-                                                            '-BPF15_55-Noise/tinyml_contest_data_training/')
+    argparser.add_argument('--path_data', type=str, default='/home/ravit/Documents/NanoCAD/TinyMLContest/data/')
     argparser.add_argument('--path_net', type=str, default='./saved_models/')
     argparser.add_argument('--path_record', type=str, default='./records/')
     argparser.add_argument('--path_indices', type=str, default='./data_indices/')
