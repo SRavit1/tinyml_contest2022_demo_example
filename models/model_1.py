@@ -58,44 +58,47 @@ class IEGMNet(nn.Module):
         return fc2_output
 
 class IEGMNetXNOR(nn.Module):
-    def __init__(self, in_bw=2, out_bw=2, weight_bw=2):
+    def __init__(self, in_bw=4, out_bw=4, weight_bw=4):
         super(IEGMNetXNOR, self).__init__()
         self.conv1 = nn.Sequential(
-            binarized_modules.BinarizeConv2d(in_bw, out_bw, weight_bw, in_channels=1, out_channels=3, kernel_size=(6, 1), stride=(2,1), padding=0),
-            nn.ReLU(True),
+            binarized_modules.BinarizeConv2d(in_bw, out_bw, weight_bw, in_channels=1, out_channels=3, kernel_size=(6, 1), stride=(2,1), padding=0, bias=False),
             nn.BatchNorm2d(3, affine=True, track_running_stats=True, eps=1e-5, momentum=0.1),
+            nn.Hardtanh(inplace=True),
         )
 
         self.conv2 = nn.Sequential(
-            binarized_modules.BinarizeConv2d(in_bw, out_bw, weight_bw, in_channels=3, out_channels=5, kernel_size=(5, 1), stride=(2,1), padding=0),
-            nn.ReLU(True),
+            binarized_modules.BinarizeConv2d(in_bw, out_bw, weight_bw, in_channels=3, out_channels=5, kernel_size=(5, 1), stride=(2,1), padding=0, bias=False),
             nn.BatchNorm2d(5, affine=True, track_running_stats=True, eps=1e-5, momentum=0.1),
+            nn.Hardtanh(inplace=True),
         )
 
         self.conv3 = nn.Sequential(
-            binarized_modules.BinarizeConv2d(in_bw, out_bw, weight_bw, in_channels=5, out_channels=10, kernel_size=(4, 1), stride=(2,1), padding=0),
-            nn.ReLU(True),
+            binarized_modules.BinarizeConv2d(in_bw, out_bw, weight_bw, in_channels=5, out_channels=10, kernel_size=(4, 1), stride=(2,1), padding=0, bias=False),
             nn.BatchNorm2d(10, affine=True, track_running_stats=True, eps=1e-5, momentum=0.1),
+            nn.Hardtanh(inplace=True),
         )
 
         self.conv4 = nn.Sequential(
-            binarized_modules.BinarizeConv2d(in_bw, out_bw, weight_bw, in_channels=10, out_channels=20, kernel_size=(4, 1), stride=(2,1), padding=0),
-            nn.ReLU(True),
+            binarized_modules.BinarizeConv2d(in_bw, out_bw, weight_bw, in_channels=10, out_channels=20, kernel_size=(4, 1), stride=(2,1), padding=0, bias=False),
             nn.BatchNorm2d(20, affine=True, track_running_stats=True, eps=1e-5, momentum=0.1),
+            nn.Hardtanh(inplace=True),
         )
 
         self.conv5 = nn.Sequential(
-            binarized_modules.BinarizeConv2d(in_bw, out_bw, weight_bw, in_channels=20, out_channels=20, kernel_size=(4, 1), stride=(2,1), padding=0),
-            nn.ReLU(True),
+            binarized_modules.BinarizeConv2d(in_bw, out_bw, weight_bw, in_channels=20, out_channels=20, kernel_size=(4, 1), stride=(2,1), padding=0, bias=False),
             nn.BatchNorm2d(20, affine=True, track_running_stats=True, eps=1e-5, momentum=0.1),
+            nn.Hardtanh(inplace=True),
         )
 
         self.fc1 = nn.Sequential(
             nn.Dropout(0.5),
-            nn.Linear(in_features=740, out_features=10)
+            binarized_modules.BinarizeLinear(in_bw, out_bw, weight_bw, in_features=740, out_features=10, bias=False),
+            nn.BatchNorm1d(10, affine=True, track_running_stats=True, eps=1e-5, momentum=0.1),
+            nn.Hardtanh(inplace=True),
         )
         self.fc2 = nn.Sequential(
-            nn.Linear(in_features=10, out_features=2)
+            binarized_modules.BinarizeLinear(in_bw, out_bw, weight_bw, in_features=10, out_features=2, bias=False),
+            nn.BatchNorm1d(2, affine=True, track_running_stats=True, eps=1e-5, momentum=0.1),
         )
 
     def forward(self, input):
