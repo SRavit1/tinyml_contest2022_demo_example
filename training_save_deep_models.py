@@ -21,7 +21,10 @@ def main():
 
     # Instantiating NN
     model_class = IEGMNetXNOR if args.xnor else IEGMNet
-    net = model_class()
+    if args.xnor:
+        net = IEGMNetXNOR(in_bw=args.act_bw, out_bw=args.act_bw, weight_bw=args.weight_bw)
+    else:
+        net = IEGMNet()
     net.train()
     net = net.float().to(device)
     
@@ -154,7 +157,8 @@ if __name__ == '__main__':
     argparser.add_argument('--path_data', type=str, default='/home/ravit/Documents/NanoCAD/TinyMLContest/data/')
     argparser.add_argument('--path_indices', type=str, default='./data_indices')
     argparser.add_argument('--xnor', action='store_true', help='train an xnor model instead of full precision')
-    # TODO: Bitwidth argument
+    argparser.add_argument('--act-bw', type=int, default=4, help='activation bitwidth')
+    argparser.add_argument('--weight-bw', type=int, default=4, help='weight bitwidth')
     argparser.add_argument('--resume', type=str, default=None, help='path to state_dict from which to resume training')
 
     args = argparser.parse_args()
