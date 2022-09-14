@@ -7,6 +7,7 @@ import torch.optim as optim
 from help_code_demo import ToTensor, IEGM_DataSET
 from models.model_1 import IEGMNet, IEGMNetXNOR
 
+import logging
 
 def main():
     # Hyperparameters
@@ -25,7 +26,7 @@ def main():
     net = net.float().to(device)
     
     if args.resume:
-        print("Load state dict from", args.resume)
+        logging.info("Load state dict from", args.resume)
         state_dict = torch.load(args.resume)
         net.load_state_dict(state_dict, strict=False)
         for module in net.modules():
@@ -49,7 +50,7 @@ def main():
 
     testloader = DataLoader(testset, batch_size=BATCH_SIZE_TEST, shuffle=True, num_workers=0)
 
-    print("Training Dataset loading finish.")
+    logging.info("Training Dataset loading finish.")
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(net.parameters(), lr=LR)
@@ -60,7 +61,7 @@ def main():
     Test_loss = []
     Test_acc = []
 
-    print("Start training")
+    logging.info("Start training")
     for epoch in range(epoch_num):  # loop over the dataset multiple times (specify the #epoch)
 
         running_loss = 0.0
@@ -86,7 +87,7 @@ def main():
             running_loss += loss.item()
             i += 1
 
-        print('[Epoch, Batches] is [%d, %5d] \nTrain Acc: %.5f Train loss: %.5f' %
+        logging.info('[Epoch, Batches] is [%d, %5d] \nTrain Acc: %.5f Train loss: %.5f' %
               (epoch + 1, i, accuracy / i, running_loss / i))
 
         Train_loss.append(running_loss / i)
@@ -114,7 +115,7 @@ def main():
             running_loss_test += loss_test.item()
             i += 1
 
-        print('Test Acc: %.5f Test Loss: %.5f' % (correct / total, running_loss_test / i))
+        logging.info('Test Acc: %.5f Test Loss: %.5f' % (correct / total, running_loss_test / i))
 
         Test_loss.append(running_loss_test / i)
         Test_acc.append((correct / total).item())
@@ -140,7 +141,7 @@ def main():
     file.write(str(Test_acc))
     file.write('\n\n')
 
-    print('Finish training')
+    logging.info('Finish training')
 
 
 if __name__ == '__main__':
@@ -160,6 +161,7 @@ if __name__ == '__main__':
 
     device = "cpu" #torch.device("cuda:" + str(args.cuda))
 
-    print("device is --------------", device)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", handlers=[logging.FileHandler("debug.log"), logging.StreamHandler()])
+    logging.info("device is -------------- {}".format(device))
 
     main()
