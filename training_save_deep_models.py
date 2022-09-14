@@ -8,6 +8,8 @@ from help_code_demo import ToTensor, IEGM_DataSET
 from models.model_1 import IEGMNet, IEGMNetXNOR
 
 import logging
+import time
+import os
 
 def main():
     # Hyperparameters
@@ -160,12 +162,18 @@ if __name__ == '__main__':
     argparser.add_argument('--act-bw', type=int, default=4, help='activation bitwidth')
     argparser.add_argument('--weight-bw', type=int, default=4, help='weight bitwidth')
     argparser.add_argument('--resume', type=str, default=None, help='path to state_dict from which to resume training')
+    argparser.add_argument('--log-path', type=str, default='/home/ravit/Documents/NanoCAD/TinyMLContest/tinyml_contest2022_demo_example/logs',
+            help='directory in which to save training logs')
 
     args = argparser.parse_args()
 
     device = "cpu" #torch.device("cuda:" + str(args.cuda))
 
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", handlers=[logging.FileHandler("debug.log"), logging.StreamHandler()])
+    log_dir = os.path.join(args.log_path, time.strftime('%Y-%m-%d-%H-%M-%S'))
+    if not os.path.isdir(log_dir):
+        os.mkdir(log_dir)
+    filePath = os.path.join(log_dir, "train.log")
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", handlers=[logging.FileHandler(filePath), logging.StreamHandler()])
     logging.info("device is -------------- {}".format(device))
 
     main()
