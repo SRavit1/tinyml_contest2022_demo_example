@@ -102,8 +102,7 @@ def main():
         accuracy = 0.0
 
         correct = 0.0
-        total = 0.0
-        i = 0.0
+        total =        i = 0.0
         running_loss_test = 0.0
 
         for data_test in testloader:
@@ -125,12 +124,15 @@ def main():
         Test_loss.append(running_loss_test / i)
         Test_acc.append((correct / total).item())
 
+    basename = os.path.join(log_dir, "IEGM_net")
     if args.xnor:
-        torch.save(net, './saved_models/IEGM_net_xnor.pkl')
-        torch.save(net.state_dict(), './saved_models/IEGM_net_state_dict_xnor.pkl')
+        torch.save(net, basename + '_xnor.pkl')
+        torch.save(net.state_dict(), basename + '_state_dict_xnor.pkl')
+        torch.onnx.export(net, torch.zeros((1, 3, 224, 224)), basename + '_xnor.onnx', verbose=True)
     else:
-        torch.save(net, './saved_models/IEGM_net.pkl')
-        torch.save(net.state_dict(), './saved_models/IEGM_net_state_dict.pkl')
+        torch.save(net, basename + '.pkl')
+        torch.save(net.state_dict(), basename + '_state_dict.pkl')
+        torch.onnx.export(net, torch.zeros((1, 3, 224, 224)), basename + '.onnx', verbose=True)
 
     file = open('./saved_models/loss_acc.txt', 'w')
     file.write("Train_loss\n")
