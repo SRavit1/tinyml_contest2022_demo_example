@@ -171,7 +171,12 @@ if __name__ == '__main__':
 
     device = "cpu" #torch.device("cuda:" + str(args.cuda))
 
-    log_dir = os.path.join(args.log_path, time.strftime('%Y-%m-%d-%H-%M-%S'))
+    if args.xnor:
+        log_name = "_".join(["xnor", str(args.act_bw), str(args.weight_bw)])
+    else:
+        log_name = "_".join(["float"])
+    log_name += "_" + time.strftime('%Y-%m-%d-%H-%M-%S')
+    log_dir = os.path.join(args.log_path, log_name)
     if not os.path.isdir(log_dir):
         os.mkdir(log_dir)
     filePath = os.path.join(log_dir, "train.log")
