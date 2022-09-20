@@ -5,7 +5,9 @@ from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.optim as optim
 from help_code_demo import ToTensor, IEGM_DataSET
-from models.model_1 import IEGMNet, IEGMNetXNOR
+
+from models.model_1 import IEGMNet, IEGMNetXNOR, IEGMNetXNORNew
+from models.network import FC_small, FC_large, CNN_medium, CNN_large, CNN_tiny
 
 import logging
 import time
@@ -16,13 +18,12 @@ def main():
     BATCH_SIZE = args.batchsz
     BATCH_SIZE_TEST = args.batchsz
     LR = args.lr
-    EPOCH = args.epoch
+    EPOCH = args.epochs
     SIZE = args.size
     path_data = args.path_data
     path_indices = args.path_indices
 
     # Instantiating NN
-    model_class = IEGMNetXNOR if args.xnor else IEGMNet
     if args.xnor:
         net = IEGMNetXNOR(in_bw=args.act_bw, out_bw=args.act_bw, weight_bw=args.weight_bw)
     else:
@@ -124,36 +125,24 @@ def main():
         Test_loss.append(running_loss_test / i)
         Test_acc.append((correct / total).item())
 
+    net.eval()
     basename = os.path.join(log_dir, "IEGM_net")
     if args.xnor:
         torch.save(net, basename + '_xnor.pkl')
         torch.save(net.state_dict(), basename + '_state_dict_xnor.pkl')
-        torch.onnx.export(net, torch.zeros((1, 3, 224, 224)), basename + '_xnor.onnx', verbose=True)
+        torch.onnx.export(net, torch.zeros((1, 1, 1250, 1)), basename + '_xnor.onnx', verbose=True)
     else:
         torch.save(net, basename + '.pkl')
         torch.save(net.state_dict(), basename + '_state_dict.pkl')
-        torch.onnx.export(net, torch.zeros((1, 3, 224, 224)), basename + '.onnx', verbose=True)
-
-    file = open('./saved_models/loss_acc.txt', 'w')
-    file.write("Train_loss\n")
-    file.write(str(Train_loss))
-    file.write('\n\n')
-    file.write("Train_acc\n")
-    file.write(str(Train_acc))
-    file.write('\n\n')
-    file.write("Test_loss\n")
-    file.write(str(Test_loss))
-    file.write('\n\n')
-    file.write("Test_acc\n")
-    file.write(str(Test_acc))
-    file.write('\n\n')
+        torch.onnx.export(net, torch.zeros((1, 1, 1250, 1)), basename + '.onnx', verbose=True)
+    net.train()
 
     logging.info('Finish training')
 
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('--epoch', type=int, help='epoch number', default=2)
+    argparser.add_argument('--epochs', type=int, help='epoch number', default=2)
     argparser.add_argument('--lr', type=float, help='learning rate', default=0.0001)
     argparser.add_argument('--batchsz', type=int, help='total batchsz for traindb', default=32)
     argparser.add_argument('--cuda', type=int, default=0)

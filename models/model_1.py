@@ -163,3 +163,16 @@ class IEGMNetXNORNew(nn.Module):
         x = self.htanh4(x)
 
         x = self.conv5(x)
+        x = self.bn5(x)
+        x = self.htanh5(x)
+
+
+        x = x.view((-1, 740))
+        x = self.fc1(x)
+        x = self.bn6(x)
+        x = self.htanh6(x)
+
+        x = self.fc2(x)
+        x = self.bn7(x)
+
+        return x
