@@ -32,7 +32,7 @@ def main():
     net = net.float().to(device)
     
     if args.resume:
-        logging.info("Load state dict from", args.resume)
+        logging.info("Load state dict from " + args.resume)
         state_dict = torch.load(args.resume)
         net.load_state_dict(state_dict, strict=False)
         for module in net.modules():
