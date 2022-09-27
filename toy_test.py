@@ -24,7 +24,7 @@ class ToyModel(nn.Module):
     def forward_0(self, x):
         x = self.conv1(x)
         x = self.conv2(x)
-        x = x.view((x.shape[0], -1))
+        x = x.view((-1, 32))
         x = self.fc1(x)
         return x
 
@@ -37,7 +37,6 @@ class ToyModel(nn.Module):
 
 def pack(arr, pckWdt=32):
     assert len(arr)%pckWdt == 0
-    print("pack arr", arr)
     packs = []
     for i in range(int(len(arr)/pckWdt)):
         pack_dec = 0
@@ -54,13 +53,16 @@ def convert_fc_act(x):
 
 def convert_conv_act(x, binarize=True):
     #x = x[0].permute((0, 2, 1)).flatten().tolist() #CHW -> CWH
-    x = x[0].permute((1, 2, 0)).flatten().tolist() #CHW -> HWC
+    x = x[0].permute((1, 2, 0)) #CHW -> HWC
+    x = x.flatten().tolist()
     if binarize:
         x = [0 if elem<0 else 1 for elem in x]
     return x
 
 def convert_conv_weight(w):
-    w = w.permute((0, 3, 2, 1)).flatten().tolist() #NCHW -> NWHC
+    w = w.permute((0, 3, 2, 1)) #NCHW -> NWHC
+    #w = w.permute((0, 2, 3, 1)) #NCHW -> NHWC
+    w = w.flatten().tolist()
     w = [0 if elem<0 else 1 for elem in w]
     return w
 
@@ -72,17 +74,22 @@ def convert_bn(mu, sigma, gamma, beta):
 
 net = ToyModel()
 net.eval()
-bn_layer = list(net.modules())[3]
+conv_layer = list(net.modules())[5]
+bn_layer = list(net.modules())[6]
+
 bn_layer.running_mean.copy_(torch.rand(bn_layer.running_mean.shape)*2)
 with torch.no_grad():
     bn_layer.weight.data.copy_(torch.rand(bn_layer.weight.data.shape)-0.5)
 
-x = torch.round(torch.rand((1, 1, 3, 1))*5)
+dummy_input = torch.round(torch.rand((1, 1, 5, 1))*5)
+torch.onnx.export(net, dummy_input, "/home/ravit/Documents/NanoCAD/TinyMLContest/tinyml_contest2022_demo_example/toy.onnx")
+
+
+"""
+x = torch.round(torch.rand((1, 32, 3, 1))*5)
 y = net.forward_1(x)
-torch.onnx.export(net, x, "/home/ravit/Documents/NanoCAD/TinyMLContest/tinyml_contest2022_demo_example/toy.onnx")
 
 x_inf = convert_conv_act(x)
-conv_layer = list(net.modules())[2]
 w_inf = convert_conv_weight(conv_layer.weight)
 bn_th_inf, bn_sign_inf = convert_bn(bn_layer.running_mean, bn_layer.running_var, bn_layer.weight, bn_layer.bias)
 bn_sign_inf_pack = pack(bn_sign_inf)
@@ -93,3 +100,23 @@ print("w", w_inf)
 print("thr", bn_th_inf)
 print("sign", bn_sign_inf_pack, bn_sign_inf)
 print("y", y_inf)
+"""
+
+x = torch.rand((1, 32, 3, 1))-0.5
+y = net.forward_1(x)
+
+x_inf = convert_conv_act(x)
+w_inf = convert_conv_weight(conv_layer.weight)
+bn_th_inf, bn_sign_inf = convert_bn(bn_layer.running_mean, bn_layer.running_var, bn_layer.weight, bn_layer.bias)
+bn_sign_inf_pack = pack(bn_sign_inf)
+y_inf = convert_conv_act(y, binarize=True)
+
+x_inf_pack = pack(x_inf)
+w_inf_pack = pack(w_inf)
+
+print("x", x_inf_pack, x_inf)
+print("w", w_inf_pack, w_inf)
+print("thr", bn_th_inf)
+print("sign", bn_sign_inf_pack, bn_sign_inf)
+print("y", y_inf)
+
