@@ -29,7 +29,7 @@ class ToyModel(nn.Module):
         return x
 
     def forward_1(self, x):
-        x = self.conv2(x)
+        x = self.fc1(x)
         return x
 
     def forward(self, x):
@@ -46,9 +46,10 @@ def pack(arr, pckWdt=32):
         packs.append(pack)
     return ", ".join(packs)
 
-def convert_fc_act(x):
+def convert_fc_act(x, binarize=True):
     x = x[0].flatten().tolist()
-    x = [0 if elem<0 else 1 for elem in x]
+    if binarize:
+        x = [0 if elem<0 else 1 for elem in x]
     return x
 
 def convert_conv_act(x, binarize=True):
@@ -58,6 +59,12 @@ def convert_conv_act(x, binarize=True):
     if binarize:
         x = [0 if elem<0 else 1 for elem in x]
     return x
+
+def convert_fc_weight(w):
+    #w = w.permute((1, 0))
+    w = w.flatten().tolist()
+    w = [0 if elem<0 else 1 for elem in w]
+    return w
 
 def convert_conv_weight(w):
     w = w.permute((0, 3, 2, 1)) #NCHW -> NWHC
@@ -71,13 +78,23 @@ def convert_bn(mu, sigma, gamma, beta):
     sign = [0 if elem<0 else 1 for elem in (torch.sign(gamma)).tolist()]
     return [e*2 for e in thr], sign
 
+def convert_bn_float(mu, sigma, gamma, beta):
+    return (mu*4).tolist(), (sigma*4).tolist(), gamma.tolist(), beta.tolist()
 
 net = ToyModel()
 net.eval()
-conv_layer = list(net.modules())[5]
-bn_layer = list(net.modules())[6]
+#conv_layer = list(net.modules())[5]
+#bn_layer = list(net.modules())[6]
 
+#conv_layer = list(net.modules())[5]
+#bn_layer = list(net.modules())[6]
+
+fc_layer = list(net.modules())[8]
+bn_layer = list(net.modules())[9]
+
+"""
 bn_layer.running_mean.copy_(torch.rand(bn_layer.running_mean.shape)*2)
+"""
 with torch.no_grad():
     bn_layer.weight.data.copy_(torch.rand(bn_layer.weight.data.shape)-0.5)
 
@@ -102,6 +119,7 @@ print("sign", bn_sign_inf_pack, bn_sign_inf)
 print("y", y_inf)
 """
 
+"""
 x = torch.rand((1, 32, 3, 1))-0.5
 y = net.forward_1(x)
 
@@ -119,4 +137,27 @@ print("w", w_inf_pack, w_inf)
 print("thr", bn_th_inf)
 print("sign", bn_sign_inf_pack, bn_sign_inf)
 print("y", y_inf)
+"""
 
+x = torch.rand((1, 32))-0.5
+y = net.forward_1(x)
+
+x_inf = convert_fc_act(x)
+w_inf = convert_fc_weight(fc_layer.weight)
+mu, sigma, gamma, beta = convert_bn_float(bn_layer.running_mean, bn_layer.running_var, bn_layer.weight, bn_layer.bias)
+bn_th_inf, bn_sign_inf = convert_bn(bn_layer.running_mean, bn_layer.running_var, bn_layer.weight, bn_layer.bias)
+bn_sign_inf_pack = pack(bn_sign_inf)
+y_inf = convert_fc_act(y, binarize=True)
+
+x_inf_pack = pack(x_inf)
+w_inf_pack = pack(w_inf)
+
+print("x", x_inf_pack, x_inf)
+print("w", w_inf_pack, w_inf)
+print("mu", mu)
+print("sigma", sigma)
+print("gamma", gamma)
+print("beta", beta)
+print("thr", bn_th_inf)
+print("sign", bn_sign_inf_pack, bn_sign_inf)
+print("y", y_inf)
