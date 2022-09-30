@@ -45,7 +45,8 @@ def convert_bn(mu, sigma, gamma, beta, binarize_input=True):
     return [e*mult for e in thr], sign
 
 def convert_bn_float(mu, sigma, gamma, beta):
-    return (mu*4).tolist(), (sigma*4).tolist(), gamma.tolist(), beta.tolist()
+    # second return value is not really sigma but sigma+1e-5
+    return (mu*4).tolist(), (torch.sqrt(sigma + 1e-5)*4).tolist(), gamma.tolist(), beta.tolist()
 
 def compile_conv_block(conv_block, x, print_=True):
     conv_layer = list(conv_block.modules())[1]

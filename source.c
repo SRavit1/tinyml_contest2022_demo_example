@@ -79,37 +79,33 @@ int main(){
 	printf("x "); print_uint8Arr(l1_act, 32);
 
 	CnBnBwn(l1_act, l1wght, C1Z, C1XY, 1, C1Z, C1KXY, 1, C1KZ, C1PD, C1PL, l2act_bin_prepool, bn1thr, bn1sign);
-
 	printf("conv1_prepool_out "); print_pckArr(l2act_bin_prepool, 32);
-
 	maxPool1d(l2act_bin_prepool, l2act_bin, C1KZ, sizeof(l2act_bin_prepool)/sizeof(pckDtype), 2);
 	printf("conv1_out "); print_pckArr(l2act_bin, 32);
 
 	CnXnorWrap(l2act_bin, l2wght, C2Z, C2XY, 1, C2Z, C2KXY, 1, C2KZ, l3act_bin_prepool, C2PD, C2PL, bn2thr, bn2sign);
+	printf("conv2_prepool_out "); print_pckArr(l3act_bin_prepool, 32);
 	maxPool1d(l3act_bin_prepool, l3act_bin, C2KZ, sizeof(l3act_bin_prepool)/sizeof(pckDtype), 2);
-	
 	printf("conv2_out "); print_pckArr(l3act_bin, 32);
 
 	CnXnorWrap(l3act_bin, l3wght, C3Z, C3XY, 1, C3Z, C3KXY, 1, C3KZ, l4act_bin_prepool, C3PD, C3PL, bn3thr, bn3sign);
+	printf("conv3_prepool_out "); print_pckArr(l4act_bin_prepool, 32);
 	maxPool1d(l4act_bin_prepool, l4act_bin, C3KZ, sizeof(l4act_bin_prepool)/sizeof(pckDtype), 2);
-	
 	printf("conv3_out "); print_pckArr(l4act_bin, 32);
 
 	CnXnorWrap(l4act_bin, l4wght, C4Z, C4XY, 1, C4Z, C4KXY, 1, C4KZ, l5act_bin_prepool, C4PD, C4PL, bn4thr, bn4sign);
+	printf("conv4_prepool_out "); print_pckArr(l5act_bin_prepool, 32);
 	maxPool1d(l5act_bin_prepool, l5act_bin, C4KZ, sizeof(l5act_bin_prepool)/sizeof(pckDtype), 2);
-	
 	printf("conv4_out "); print_pckArr(l5act_bin, 32);
 
 	CnXnorWrap(l5act_bin, l5wght, C5Z, C5XY, 1, C5Z, C5KXY, 1, C5KZ, l6act_bin_prepool, C5PD, C5PL, bn5thr, bn5sign);
+	printf("conv5_prepool_out "); print_pckArr(l6act_bin_prepool, 32);
 	maxPool1d(l6act_bin_prepool, l6act_bin, C5KZ, sizeof(l6act_bin_prepool)/sizeof(pckDtype), 2);
-	
 	printf("conv5_out "); print_pckArr(l6act_bin, 32);
 	
 	FcXnorWrap(l6act_bin, l6wght, F6I, F6O, l7act_bin, bn6thr, bn6sign);
-
 	printf("fc1_out "); print_pckArr(l7act_bin, 32);
 
 	FcXnorNoBinWrap(l7act_bin, l7wght, F7I, F7O, output, bn7mean, bn7var, bn7gamma, bn7beta);
-
 	printf("fc2_out "); print_floatArr(output, F7O);
 }

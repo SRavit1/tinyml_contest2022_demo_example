@@ -188,8 +188,7 @@ def main():
         y = net.fc2(fc2_in)
         y_ = net.forward(x)
 
-        x_inf, w_inf, bn_th_inf, bn_sign_inf, bn_sign_inf_pack, y_inf = compile_conv_block(net.conv1, x)
-        compile_conv_block(net.conv1, x)
+        #compile_conv_block(net.conv1, x)
 
         """
         conv_layer = list(net.conv1.modules())[1]
@@ -220,7 +219,7 @@ def main():
         #compile_conv_block(net.conv4, conv4_in)
         #compile_conv_block(net.conv5, conv5_in)
         #compile_fc_block(net.fc1, fc1_in)
-        #compile_fc_block(net.fc2, fc2_in, binarize_output=False)
+        compile_fc_block(net.fc2, fc2_in, binarize_output=False)
 
 
 if __name__ == '__main__':
