@@ -19,7 +19,8 @@ def convert_fc_act(x, binarize=True):
     return x
 
 def convert_conv_act(x, binarize=True):
-    x = x[0].permute((1, 2, 0)) #CHW -> HWC, BWN
+    x = x[0]
+    x = x.permute((1, 2, 0)) #CHW -> HWC, BWN
     x = x.flatten().tolist()
     if binarize:
         x = [0 if elem<0 else 1 for elem in x]
@@ -36,10 +37,12 @@ def convert_conv_weight(w):
     w = [0 if elem<0 else 1 for elem in w]
     return w
 
-def convert_bn(mu, sigma, gamma, beta):
-    thr = ((beta*sigma / torch.sqrt(torch.pow(gamma, 2) + 1e-4)) + mu).tolist()
+def convert_bn(mu, sigma, gamma, beta, binarize_input=True):
+    mult = 4 if binarize_input else 2 # weights always binarized, input sometimes binarized
+    #thr = ((-1*beta*torch.sqrt(sigma+1e-5) / torch.sqrt(torch.pow(gamma, 2) + 1e-4)) + mu).tolist()
+    thr = ((-1*beta*torch.sqrt(sigma+1e-5) / torch.sqrt(torch.pow(gamma, 2) + 1e-5)) + mu).tolist()
     sign = [0 if elem<0 else 1 for elem in (torch.sign(gamma)).tolist()]
-    return [e*2 for e in thr], sign
+    return [e*mult for e in thr], sign
 
 def convert_bn_float(mu, sigma, gamma, beta):
     return (mu*4).tolist(), (sigma*4).tolist(), gamma.tolist(), beta.tolist()
@@ -48,11 +51,16 @@ def compile_conv_block(conv_block, x, print_=True):
     conv_layer = list(conv_block.modules())[1]
     bn_layer = list(conv_block.modules())[2]
 
-    y = conv_block.forward(x)
+    #y = conv_block.forward(x)
+    conv1_out = conv_layer(x)
+    conv1_out_bn = bn_layer(conv1_out)
+    y = conv1_out_bn
 
     x_inf = convert_conv_act(x, binarize=conv_layer.binarize_input)
     w_inf = convert_conv_weight(conv_layer.weight)
-    bn_th_inf, bn_sign_inf = convert_bn(bn_layer.running_mean, bn_layer.running_var, bn_layer.weight, bn_layer.bias)
+    mu, sigma, gamma, beta = bn_layer.running_mean.detach().clone(), bn_layer.running_var.detach().clone(), bn_layer.weight.detach().clone(), bn_layer.bias.detach().clone()
+    bn_th_inf, bn_sign_inf = convert_bn(mu, sigma, gamma, beta, conv_layer.binarize_input)
+    #bn_th_inf, bn_sign_inf = convert_bn(bn_layer.running_mean, bn_layer.running_var, bn_layer.weight, bn_layer.bias, conv_layer.binarize_input)
     bn_sign_inf_pack = pack(bn_sign_inf)
     y_inf = convert_conv_act(y)
 

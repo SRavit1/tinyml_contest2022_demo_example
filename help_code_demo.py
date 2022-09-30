@@ -154,6 +154,20 @@ class ToTensor(object):
             'label': sample['label']
         }
 
+class Normalize(object):
+    def __call__(self, sample):
+        t = sample['IEGM_seg']
+        t = torch.clamp(torch.round((t+2)*255./4), 0, 255)
+        sample['IEGM_seg'] = t
+        return sample
+
+import math
+class Trim32(object):
+    def __call__(self, sample):
+        t = sample['IEGM_seg']
+        t = t[:,:math.floor(t.size()[1]/32)*32]
+        sample['IEGM_seg'] = t
+        return sample
 
 class IEGM_DataSET():
     def __init__(self, root_dir, indice_dir, mode, size, transform=None):
@@ -181,6 +195,7 @@ class IEGM_DataSET():
         IEGM_seg = txt_to_numpy(text_path, self.size).reshape(1, self.size, 1)
         label = int(self.names_list[idx].split(' ')[1])
         sample = {'IEGM_seg': IEGM_seg, 'label': label}
+        sample = self.transform(sample)
 
         return sample
 
